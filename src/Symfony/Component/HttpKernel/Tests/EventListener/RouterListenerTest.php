@@ -77,4 +77,32 @@ class RouterListenerTest extends \PHPUnit_Framework_TestCase
 
         return new GetResponseEvent($kernel, $request, HttpKernelInterface::MASTER_REQUEST);
     }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testInvalidMatcher()
+    {
+        new RouterListener(new \stdClass());
+    }
+
+    public function testRequestMatcher()
+    {
+        $event = $this->createGetResponseEventForUri('http://localhost/');
+        $context = new RequestContext();
+
+        $requestMatcher = $this->getMockBuilder('Symfony\Component\Routing\Matcher\RequestMatcherInterface')
+                                 ->getMock();
+
+        $requestMatcher->expects($this->any())
+                       ->method('getContext')
+                       ->will($this->returnValue($context));
+        $requestMatcher->expects($this->once())
+                       ->method('matchRequest')
+                       ->with($this->equalTo($event->getRequest()))
+                       ->will($this->returnValue(array()));
+
+        $listener = new RouterListener($requestMatcher);
+        $listener->onKernelRequest($event);
+    }
 }
